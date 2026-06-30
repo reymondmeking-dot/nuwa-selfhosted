@@ -50,6 +50,12 @@ YOUR_SERVER_IP
 
 ## Install in Hermes
 
+Install directly from GitHub:
+
+```bash
+hermes skills install https://raw.githubusercontent.com/reymondmeking-dot/nuwa-selfhosted/main/SKILL.md
+```
+
 From a local checkout:
 
 ```bash
