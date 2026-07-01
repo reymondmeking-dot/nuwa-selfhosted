@@ -66,6 +66,12 @@ Or copy this folder into your Hermes skills directory as `nuwa-selfhosted`.
 
 ## Use the helper script directly
 
+Requirements:
+
+- Python 3.9+
+- `PyYAML` (`pip install pyyaml` or `uv pip install pyyaml`)
+- `git` on `$PATH` (only if you let the script clone `awesome-selfhosted-data` for you)
+
 The script can clone/update `awesome-selfhosted-data` into `data/awesome-selfhosted-data` automatically:
 
 ```bash
