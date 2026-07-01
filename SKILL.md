@@ -1,8 +1,8 @@
 ---
 name: nuwa-selfhosted
 description: Use when finding, comparing, or planning deployment of self-hosted software from awesome-selfhosted. Dynamically reads awesome-selfhosted-data, filters by need, license, platform, and maintenance signals, then returns a practical shortlist with deployment cautions.
-version: 1.0.0
-author: ReyMao + Hermes Agent
+version: 1.1.0
+author: ReyMao
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
@@ -191,17 +191,34 @@ When the user selects a project and asks to deploy:
 
 Completion criterion: deployment advice is backed by the selected project’s current docs or real command output.
 
-## Local Query Script
+## Local Query CLI
 
-This skill may ship with `scripts/nuwa_selfhosted_query.py`. Use it to query the catalog quickly:
+The recommended entry point is the `nuwa-selfhosted` console script (installed via `pip install nuwa-selfhosted` or `pip install -e .` from a local checkout). It works on macOS and Windows.
 
 ```bash
-python scripts/nuwa_selfhosted_query.py "notion knowledge base" --data ./data/awesome-selfhosted-data --limit 8
-python scripts/nuwa_selfhosted_query.py "zapier automation" --prefer-docker --limit 10
-python scripts/nuwa_selfhosted_query.py "ai chat rag" --tag "Generative Artificial Intelligence (GenAI)" --json
+nuwa-selfhosted query "notion knowledge base" --limit 5
+nuwa-selfhosted query "zapier automation" --prefer-docker --limit 10
+nuwa-selfhosted query --tag "Generative Artificial Intelligence (GenAI)" --limit 8 --json
+nuwa-selfhosted query --tag ai --limit 5
+nuwa-selfhosted update    # (re-)clone awesome-selfhosted-data
+nuwa-selfhosted version   # prints 1.1.0
 ```
 
-If the script is unavailable, implement the same logic directly with Python: parse YAML, filter proprietary/archived entries, score by tags/keywords/platforms, and return a markdown table.
+Subcommands:
+
+- `query`   — search the catalog (accepts a free-text query and/or `--tag`).
+- `update`  — clone or `git pull --ff-only` the local `awesome-selfhosted-data` checkout.
+- `version` — print the package version.
+
+Script fallback (still supported for backward compatibility):
+
+```bash
+python scripts/nuwa_selfhosted_query.py "notion knowledge base" --limit 8
+```
+
+The script is now a thin shim over `nuwa_selfhosted.cli:main`, so its arguments match the `query` subcommand exactly.
+
+If neither the CLI nor the script is available, implement the same logic directly with Python: parse YAML, filter proprietary/archived entries, score by tags/keywords/platforms, and return a markdown table.
 
 ## Common Pitfalls
 
