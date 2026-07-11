@@ -10,7 +10,7 @@ It is designed for practical software selection:
 - Show licenses, source URLs, deployment difficulty, and cautions.
 - Keep the catalog fresh by reading `awesome-selfhosted-data` dynamically instead of embedding a stale list.
 
-**Author:** ReyMao — **License:** MIT — **Version:** 1.1.0
+**Author:** ReyMao — **License:** MIT — **Version:** 1.1.1
 
 ## What it uses
 
@@ -33,7 +33,7 @@ https://github.com/awesome-selfhosted/awesome-selfhosted
 SKILL.md                              Hermes skill instructions
 pyproject.toml                        Package metadata (PEP 621)
 src/nuwa_selfhosted/                  Python package
-  ├── __init__.py                     __version__ = "1.1.0"
+  ├── __init__.py                     __version__ = "1.1.1"
   ├── cli.py                          `nuwa-selfhosted` entry point (argparse)
   └── query.py                        Core query / scoring logic
 scripts/nuwa_selfhosted_query.py      Backward-compatible shim -> nuwa_selfhosted.cli:main
@@ -64,7 +64,7 @@ cd nuwa-selfhosted
 python3 -m pip install -e .
 
 # 校验安装
-nuwa-selfhosted version   # -> 1.1.0
+nuwa-selfhosted version   # -> 1.1.1
 ```
 
 ### Windows

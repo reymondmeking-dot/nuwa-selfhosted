@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nuwa-selfhosted"
-version = "1.1.0"
+version = "1.1.1"
 description = "Query awesome-selfhosted-data and get practical, decision-ready shortlists of self-hosted software."
 readme = "README.md"
 requires-python = ">=3.9"

@@ -10,6 +10,7 @@ Subcommands:
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 from typing import Sequence
 
@@ -22,6 +23,13 @@ from .query import (
     shortlist,
     update_data,
 )
+
+
+def _positive_int(value: str) -> int:
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be at least 1")
+    return number
 
 
 def _add_query_parser(sub: argparse._SubParsersAction) -> None:
@@ -40,7 +48,7 @@ def _add_query_parser(sub: argparse._SubParsersAction) -> None:
         default=DEFAULT_DATA_PATH,
         help="Path to awesome-selfhosted-data checkout (env: NUWA_SELFHOSTED_DATA).",
     )
-    p.add_argument("--limit", type=int, default=8)
+    p.add_argument("--limit", type=_positive_int, default=8)
     p.add_argument(
         "--tag",
         action="append",
@@ -164,7 +172,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     if not getattr(args, "command", None):
         parser.print_help()
         return 0
-    return int(args.func(args) or 0)
+    try:
+        return int(args.func(args) or 0)
+    except FileNotFoundError as exc:
+        missing = exc.filename or "required executable"
+        print(f"Error: {missing} was not found on PATH.", file=sys.stderr)
+        return 2
+    except subprocess.CalledProcessError as exc:
+        command = " ".join(str(part) for part in exc.cmd)
+        print(
+            f"Error: command failed with exit {exc.returncode}: {command}",
+            file=sys.stderr,
+        )
+        return 2
 
 
 if __name__ == "__main__":  # pragma: no cover

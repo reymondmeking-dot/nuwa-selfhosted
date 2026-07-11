@@ -1,7 +1,7 @@
 ---
 name: nuwa-selfhosted
 description: Use when finding, comparing, or planning deployment of self-hosted software from awesome-selfhosted. Dynamically reads awesome-selfhosted-data, filters by need, license, platform, and maintenance signals, then returns a practical shortlist with deployment cautions.
-version: 1.1.0
+version: 1.1.1
 author: ReyMao
 license: MIT
 platforms: [linux, macos, windows]
@@ -201,7 +201,7 @@ nuwa-selfhosted query "zapier automation" --prefer-docker --limit 10
 nuwa-selfhosted query --tag "Generative Artificial Intelligence (GenAI)" --limit 8 --json
 nuwa-selfhosted query --tag ai --limit 5
 nuwa-selfhosted update    # (re-)clone awesome-selfhosted-data
-nuwa-selfhosted version   # prints 1.1.0
+nuwa-selfhosted version   # prints 1.1.1
 ```
 
 Subcommands:

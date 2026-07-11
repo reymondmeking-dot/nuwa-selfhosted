@@ -16,6 +16,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
+from urllib.parse import quote, urlparse
 
 try:
     import yaml
@@ -115,6 +116,15 @@ def ensure_data(path: Path, update: bool = True) -> Path:
                 print(f"Warning: could not update data repo: {exc}", file=sys.stderr)
         return path
 
+    if path.exists():
+        if not path.is_dir():
+            raise SystemExit(f"Data path exists but is not a directory: {path}")
+        if any(path.iterdir()):
+            raise SystemExit(
+                f"{path} exists but is not an awesome-selfhosted-data checkout; "
+                "refusing to overwrite it. Choose another --data path."
+            )
+
     path.parent.mkdir(parents=True, exist_ok=True)
     _run(["git", "clone", "--depth", "1", DATA_REPO, str(path)])
     return path
@@ -145,6 +155,18 @@ def infer_tags(query: str) -> set[str]:
     tags: set[str] = set()
     for word in words:
         tags.update(TAG_HINTS.get(word, []))
+    return tags
+
+
+def wanted_tags_for(query: str, explicit_tags: Iterable[str]) -> set[str]:
+    """Expand short tag aliases while preserving exact catalog tag names."""
+    tags = infer_tags(query)
+    for tag in explicit_tags:
+        cleaned = str(tag).strip()
+        if not cleaned:
+            continue
+        tags.add(cleaned)
+        tags.update(infer_tags(cleaned))
     return tags
 
 
@@ -254,8 +276,7 @@ def shortlist(
     data = ensure_data(Path(options.data), update=not options.no_update)
     items, errors = load_items(data)
     query_words = normalize_words(options.query)
-    wanted_tags = infer_tags(options.query)
-    wanted_tags.update(options.tag or [])
+    wanted_tags = wanted_tags_for(options.query, options.tag or [])
 
     rows: list[dict[str, Any]] = []
     for entry in items:
@@ -264,11 +285,7 @@ def shortlist(
             continue
         if not options.include_archived and entry.get("archived"):
             continue
-        if (
-            options.prefer_docker
-            and options.docker_only
-            and "Docker" not in set(entry.get("platforms") or [])
-        ):
+        if options.docker_only and "Docker" not in set(entry.get("platforms") or []):
             continue
         score, reasons = score_entry(
             entry, query_words, wanted_tags, options.prefer_docker
@@ -284,7 +301,32 @@ def shortlist(
         key=lambda e: (e.get("_score", 0), e.get("stargazers_count") or 0),
         reverse=True,
     )
-    return rows[: options.limit], errors, wanted_tags
+    return rows[: max(0, options.limit)], errors, wanted_tags
+
+
+def _markdown_cell(value: Any) -> str:
+    """Escape catalog text so one malformed value cannot break the table."""
+    return str(value or "").replace("\r", " ").replace("\n", " ").replace("|", "/")
+
+
+def _safe_markdown_url(value: Any) -> str:
+    """Return an escaped public web URL, or an empty string for unsafe schemes."""
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    try:
+        parsed = urlparse(raw)
+        hostname = parsed.hostname
+    except ValueError:
+        return ""
+    if (
+        parsed.scheme.lower() not in {"http", "https"}
+        or not hostname
+        or parsed.username is not None
+        or parsed.password is not None
+    ):
+        return ""
+    return quote(raw, safe=":/?#[]@!$&'*+,;=%~-._")
 
 
 def markdown(
@@ -303,12 +345,14 @@ def markdown(
     )
     out.append("|---:|---|---:|---|---|---|---|---|---|")
     for i, e in enumerate(rows, 1):
+        name = _markdown_cell(e.get("name", "")).replace("]", "\\]")
+        website = _safe_markdown_url(e.get("website_url", ""))
         project = (
-            f"[{e.get('name','')}]({e.get('website_url','')})"
-            if e.get("website_url")
-            else e.get("name", "")
+            f"[{name}]({website})"
+            if website
+            else name
         )
-        source = e.get("source_code_url") or ""
+        source = _safe_markdown_url(e.get("source_code_url") or "")
         if source:
             source = f"[source]({source})"
         out.append(
@@ -316,9 +360,9 @@ def markdown(
                 rank=i,
                 project=project,
                 score=e.get("_score", 0),
-                why=", ".join(e.get("_reasons") or [])[:90].replace("|", "/"),
-                platform=", ".join(e.get("platforms") or []).replace("|", "/"),
-                license=", ".join(e.get("licenses") or []).replace("|", "/"),
+                why=_markdown_cell(", ".join(e.get("_reasons") or [])[:90]),
+                platform=_markdown_cell(", ".join(e.get("platforms") or [])),
+                license=_markdown_cell(", ".join(e.get("licenses") or [])),
                 source=source,
                 difficulty=difficulty(e),
                 caution=caution(e).replace("|", "/"),
